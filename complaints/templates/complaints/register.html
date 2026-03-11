@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>SpeakUp Register</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+background:linear-gradient(to right,#0f2027,#203a43,#2c5364);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+/* BACK BUTTON */
+
+.back-btn{
+position:fixed;
+top:20px;
+left:20px;
+background:#ffffff20;
+color:white;
+padding:8px 16px;
+border-radius:20px;
+text-decoration:none;
+font-weight:bold;
+transition:0.3s;
+}
+
+.back-btn:hover{
+background:#ffffff40;
+transform:scale(1.05);
+}
+
+/* CARD */
+
+.register-card{
+background:#546a72;
+padding:40px;
+border-radius:20px;
+width:400px;
+text-align:center;
+box-shadow:0px 10px 30px rgba(0,0,0,0.4);
+color:white;
+}
+
+.logo{
+background:#ff7a18;
+width:80px;
+height:80px;
+border-radius:50%;
+margin:auto;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:30px;
+margin-bottom:10px;
+}
+
+h1{
+margin:10px 0;
+}
+
+.subtitle{
+font-size:14px;
+color:#dcdcdc;
+margin-bottom:25px;
+}
+
+form{
+text-align:left;
+}
+
+label{
+font-size:14px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:5px;
+margin-bottom:15px;
+border-radius:8px;
+border:none;
+}
+
+.error{
+color:#ffb3b3;
+font-size:12px;
+margin-top:-10px;
+margin-bottom:10px;
+}
+
+.register-btn{
+width:100%;
+padding:12px;
+background:#ff7a18;
+border:none;
+border-radius:25px;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+.register-btn:hover{
+background:#ff8c2a;
+}
+
+.login-link{
+text-align:center;
+margin-top:15px;
+}
+
+.login-link a{
+color:#ffffff;
+text-decoration:none;
+font-weight:bold;
+}
+
+</style>
+
+<script>
+
+function validateForm(){
+
+let email = document.getElementById("email").value;
+let password = document.getElementById("password").value;
+let confirm = document.getElementById("confirm_password").value;
+
+let gmailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+if(!gmailPattern.test(email)){
+alert("Please enter a valid Gmail address (example@gmail.com)");
+return false;
+}
+
+if(password.length < 8){
+alert("Password must be at least 8 characters long");
+return false;
+}
+
+if(password !== confirm){
+alert("Passwords do not match");
+return false;
+}
+
+return true;
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<!-- BACK BUTTON -->
+<a href="javascript:history.back()" class="back-btn">
+⬅ Back
+</a>
+
+<div class="register-card">
+
+<div class="logo">📢</div>
+
+<h1>SpeakUp</h1>
+<p class="subtitle">Create your account to report civic issues</p>
+
+<form method="POST" onsubmit="return validateForm()">
+{% csrf_token %}
+
+<label>Username</label>
+<input type="text" name="username" required>
+
+<label>Email</label>
+<input type="email" id="email" name="email" required placeholder="example@gmail.com">
+
+<label>Password</label>
+<input type="password" id="password" name="password" required minlength="8">
+
+<label>Confirm Password</label>
+<input type="password" id="confirm_password" name="confirm_password" required minlength="8">
+
+<button class="register-btn">Register</button>
+
+</form>
+
+<div class="login-link">
+Already have an account? <a href="{% url 'login' %}">Login</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<script>
+
+var map = L.map('map').setView([20.5937, 78.9629], 5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+}).addTo(map);
+
+var marker;
+
+// Click on map
+map.on('click', function(e){
+
+    var lat = e.latlng.lat;
+    var lng = e.latlng.lng;
+
+    if(marker){
+        map.removeLayer(marker);
+    }
+
+    marker = L.marker([lat,lng]).addTo(map);
+
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+
+});
+
+
+// GPS Location Function
+function getLocation(){
+
+    if(navigator.geolocation){
+
+        navigator.geolocation.getCurrentPosition(showPosition);
+
+    }else{
+
+        alert("Geolocation not supported by this browser.");
+
+    }
+
+}
+
+
+function showPosition(position){
+
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
+
+    map.setView([lat,lng],15);
+
+    if(marker){
+        map.removeLayer(marker);
+    }
+
+    marker = L.marker([lat,lng]).addTo(map)
+    .bindPopup("You are here")
+    .openPopup();
+
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+
+}
+
+</script>

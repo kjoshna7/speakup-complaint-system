@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>Submit Complaint</title>
+
+<link rel="stylesheet" href="{% static 'complaints/style.css' %}">
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+
+body{
+background:linear-gradient(135deg,#6a11cb,#2575fc);
+font-family:"Segoe UI",sans-serif;
+margin:0;
+padding:0;
+}
+
+.container{
+max-width:800px;
+margin:60px auto;
+background:#fff;
+padding:30px 35px;
+border-radius:16px;
+box-shadow:0 15px 35px rgba(0,0,0,0.2);
+}
+
+h2{
+text-align:center;
+color:#2575fc;
+margin-bottom:25px;
+}
+
+h3{
+margin-top:20px;
+color:#6a11cb;
+border-bottom:2px solid #eee;
+padding-bottom:5px;
+}
+
+label{
+display:block;
+margin-top:12px;
+font-weight:600;
+}
+
+input,textarea,select{
+width:100%;
+padding:10px;
+margin-top:6px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+width:100%;
+margin-top:20px;
+padding:12px;
+border:none;
+border-radius:10px;
+background:linear-gradient(135deg,#2575fc,#6a11cb);
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+.map-button{
+background:#6a11cb;
+}
+
+.confirm-btn{
+background:#28a745;
+}
+
+.info-text{
+font-size:13px;
+color:#666;
+margin-top:5px;
+}
+
+</style>
+</head>
+
+<body>
+
+{% include 'complaints/navbar.html' %}
+
+<div class="container">
+
+<h2>Submit Complaint</h2>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+<label>Category</label>
+
+<select name="category" id="category" required onchange="toggleOtherCategory()">
+<option value="">Select Category</option>
+<option value="Water">Water Supply</option>
+<option value="Road">Road / Potholes</option>
+<option value="Electricity">Electricity</option>
+<option value="Garbage">Garbage / Waste</option>
+<option value="Street Light">Street Light</option>
+<option value="Drainage">Drainage</option>
+<option value="Public Transport">Public Transport</option>
+<option value="Other">Other</option>
+</select>
+
+<div id="otherCategoryDiv" style="display:none">
+<label>Specify Category</label>
+<input type="text" id="otherCategoryInput" name="other_category">
+</div>
+
+<label>Description</label>
+<textarea name="description" required></textarea>
+
+<h3>Location Details</h3>
+
+<label>State</label>
+
+<select name="state" id="stateDropdown" required>
+
+<option value="">Search State</option>
+
+<option>Andhra Pradesh</option>
+<option>Arunachal Pradesh</option>
+<option>Assam</option>
+<option>Bihar</option>
+<option>Chhattisgarh</option>
+<option>Goa</option>
+<option>Gujarat</option>
+<option>Haryana</option>
+<option>Himachal Pradesh</option>
+<option>Jharkhand</option>
+<option>Karnataka</option>
+<option>Kerala</option>
+<option>Madhya Pradesh</option>
+<option>Maharashtra</option>
+<option>Manipur</option>
+<option>Meghalaya</option>
+<option>Mizoram</option>
+<option>Nagaland</option>
+<option>Odisha</option>
+<option>Punjab</option>
+<option>Rajasthan</option>
+<option>Sikkim</option>
+<option>Tamil Nadu</option>
+<option>Telangana</option>
+<option>Tripura</option>
+<option>Uttar Pradesh</option>
+<option>Uttarakhand</option>
+<option>West Bengal</option>
+
+<option>Andaman and Nicobar Islands</option>
+<option>Chandigarh</option>
+<option>Dadra and Nagar Haveli and Daman and Diu</option>
+<option>Delhi</option>
+<option>Lakshadweep</option>
+<option>Ladakh</option>
+<option>Puducherry</option>
+<option>Jammu and Kashmir</option>
+
+</select>
+
+<label>City</label>
+<input type="text" name="city" required>
+
+<label>Street / Area</label>
+<textarea name="address" rows="3" required></textarea>
+
+<label>Zipcode</label>
+<input type="text" name="zipcode" required>
+
+<label>Upload Image</label>
+<input type="file" name="image">
+
+<label>Priority</label>
+
+<select name="priority" required>
+<option value="Low">Low</option>
+<option value="Medium">Medium</option>
+<option value="High">High</option>
+</select>
+
+<h3>Select Location (Optional)</h3>
+
+<button type="button" class="map-button" onclick="openGoogleMaps()">
+🗺 Open Google Maps
+</button>
+
+<p class="info-text">
+(Optional) You can open Google Maps to verify the complaint location.
+</p>
+
+<button type="button" id="confirmBtn" class="confirm-btn" onclick="confirmLocation()" style="display:none;">
+✔ Confirm Location
+</button>
+
+<button type="submit">
+Submit Complaint
+</button>
+
+</form>
+
+</div>
+
+<script>
+
+$(document).ready(function(){
+
+$('#stateDropdown').select2({
+placeholder:"Search state"
+});
+
+});
+
+function toggleOtherCategory(){
+
+let category=document.getElementById("category").value;
+let div=document.getElementById("otherCategoryDiv");
+
+if(category==="Other")
+div.style.display="block";
+else
+div.style.display="none";
+
+}
+
+function openGoogleMaps(){
+
+let address=document.querySelector("textarea[name='address']").value;
+let city=document.querySelector("input[name='city']").value;
+let state=document.querySelector("#stateDropdown").value;
+
+let location = address + " " + city + " " + state;
+
+let url="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(location);
+
+window.open(url,"_blank");
+
+document.getElementById("confirmBtn").style.display="block";
+
+}
+
+function confirmLocation(){
+
+alert("Location verified successfully");
+
+document.getElementById("confirmBtn").disabled = true;
+
+}
+
+</script>
+
+</body>
+</html>

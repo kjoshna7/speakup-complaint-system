@@ -1,0 +1,33 @@
+{% extends "complaints/base.html" %}
+
+{% block content %}
+
+<h2>🔔 Notifications</h2>
+
+<div class="notifications-box">
+
+{% for n in notifications %}
+
+<div class="notification-item">
+
+```
+<p>{{ n.message }}</p>
+<small>{{ n.created_at }}</small>
+
+{% if not n.is_read %}
+    <a href="{% url 'mark_notification_read' n.id %}" class="mark-read-btn">
+        Mark as Read
+    </a>
+{% else %}
+    <span class="read-label">Read</span>
+{% endif %}
+```
+
+</div>
+{% empty %}
+<p>No notifications available</p>
+{% endfor %}
+
+</div>
+
+{% endblock %}

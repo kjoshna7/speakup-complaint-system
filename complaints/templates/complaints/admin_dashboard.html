@@ -1,0 +1,57 @@
+from django.contrib import admin
+from .models import Complaint
+
+
+class ComplaintAdmin(admin.ModelAdmin):
+
+    # Columns visible in admin table
+    list_display = (
+        'id',
+        'user',
+        'category',
+        'city',
+        'priority',
+        'status',
+        'created_at'
+    )
+
+    # Filters on right side
+    list_filter = (
+        'status',
+        'priority',
+        'category',
+        'city',
+        'created_at'
+    )
+
+    # Search functionality
+    search_fields = (
+        'category',
+        'description',
+        'address',
+        'city',
+        'state',
+        'zipcode'
+    )
+
+    # Editable fields directly in list view
+    list_editable = (
+        'status',
+    )
+
+    # Default ordering
+    ordering = (
+        '-created_at',
+    )
+
+    # Pagination
+    list_per_page = 20
+
+    # Read only fields
+    readonly_fields = (
+        'created_at',
+    )
+
+
+admin.site.register(Complaint, ComplaintAdmin)
+
