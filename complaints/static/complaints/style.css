@@ -487,3 +487,9 @@ transform:scale(1.05);
     color:gray;
     font-size:12px;
 }
+
+.chart-box{
+width:500px;
+height:300px;
+margin-bottom:30px;
+}

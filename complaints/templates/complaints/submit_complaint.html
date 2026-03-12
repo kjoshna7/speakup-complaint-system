@@ -10,6 +10,14 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- Leaflet Search (Autocomplete) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
 <style>
 
 body{
@@ -67,18 +75,16 @@ font-size:16px;
 cursor:pointer;
 }
 
-.map-button{
-background:#6a11cb;
-}
-
-.confirm-btn{
-background:#28a745;
-}
-
 .info-text{
 font-size:13px;
 color:#666;
 margin-top:5px;
+}
+
+#map{
+height:400px;
+margin-top:10px;
+border-radius:10px;
 }
 
 </style>
@@ -94,6 +100,9 @@ margin-top:5px;
 
 <form method="post" enctype="multipart/form-data">
 {% csrf_token %}
+
+<input type="hidden" name="latitude" id="latitude">
+<input type="hidden" name="longitude" id="longitude">
 
 <label>Category</label>
 
@@ -185,19 +194,13 @@ margin-top:5px;
 <option value="High">High</option>
 </select>
 
-<h3>Select Location (Optional)</h3>
+<h3>Select Complaint Location(optional)</h3>
 
-<button type="button" class="map-button" onclick="openGoogleMaps()">
-🗺 Open Google Maps
-</button>
+<div id="map"></div>
 
 <p class="info-text">
-(Optional) You can open Google Maps to verify the complaint location.
+Search location or click on map to mark complaint location.
 </p>
-
-<button type="button" id="confirmBtn" class="confirm-btn" onclick="confirmLocation()" style="display:none;">
-✔ Confirm Location
-</button>
 
 <button type="submit">
 Submit Complaint
@@ -229,29 +232,54 @@ div.style.display="none";
 
 }
 
-function openGoogleMaps(){
+var map = L.map('map').setView([20.5937,78.9629],5);
 
-let address=document.querySelector("textarea[name='address']").value;
-let city=document.querySelector("input[name='city']").value;
-let state=document.querySelector("#stateDropdown").value;
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
 
-let location = address + " " + city + " " + state;
+var marker;
 
-let url="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(location);
+/* Search bar with autocomplete */
 
-window.open(url,"_blank");
+var geocoder = L.Control.geocoder({
+defaultMarkGeocode:false
+}).addTo(map);
 
-document.getElementById("confirmBtn").style.display="block";
+geocoder.on('markgeocode',function(e){
 
+var latlng = e.geocode.center;
+
+map.setView(latlng,16);
+
+if(marker){
+map.removeLayer(marker);
 }
 
-function confirmLocation(){
+marker=L.marker(latlng).addTo(map);
 
-alert("Location verified successfully");
+document.getElementById("latitude").value = latlng.lat;
+document.getElementById("longitude").value = latlng.lng;
 
-document.getElementById("confirmBtn").disabled = true;
+});
 
+/* Click map */
+
+map.on('click',function(e){
+
+var lat=e.latlng.lat;
+var lng=e.latlng.lng;
+
+if(marker){
+map.removeLayer(marker);
 }
+
+marker=L.marker([lat,lng]).addTo(map);
+
+document.getElementById("latitude").value=lat;
+document.getElementById("longitude").value=lng;
+
+});
 
 </script>
 

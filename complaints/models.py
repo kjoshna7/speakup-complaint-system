@@ -4,18 +4,21 @@ from django.contrib.auth.models import User
 
 class Complaint(models.Model):
 
+    # Status Choices
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('In Progress', 'In Progress'),
         ('Resolved', 'Resolved'),
     ]
 
+    # Priority Choices
     PRIORITY_CHOICES = [
         ('Low', 'Low'),
         ('Medium', 'Medium'),
         ('High', 'High'),
     ]
 
+    # Complaint Categories
     CATEGORY_CHOICES = [
         ('Water', 'Water'),
         ('Road', 'Road'),
@@ -25,7 +28,7 @@ class Complaint(models.Model):
         ('Other', 'Other'),
     ]
 
-    # Basic Complaint Info
+    # Basic Complaint Information
     title = models.CharField(max_length=200)
     category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     description = models.TextField()
@@ -36,11 +39,11 @@ class Complaint(models.Model):
     address = models.TextField(blank=True, null=True)
     zipcode = models.CharField(max_length=10)
 
-    # Map Coordinates
+    # Map Coordinates (Used for Map Feature)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
-    # Priority
+    # Complaint Priority
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_CHOICES,
@@ -49,7 +52,11 @@ class Complaint(models.Model):
     )
 
     # Image Upload
-    image = models.ImageField(upload_to='complaints/', null=True, blank=True)
+    image = models.ImageField(
+        upload_to='complaints/',
+        null=True,
+        blank=True
+    )
 
     # Complaint Status
     status = models.CharField(
@@ -66,14 +73,16 @@ class Complaint(models.Model):
         related_name='complaints'
     )
 
-    # Timestamp
+    # Timestamp Fields
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Full Address Helper
     def full_address(self):
         parts = [self.address, self.city, self.state, self.zipcode]
         return ", ".join(filter(None, parts))
 
+    # Display Name in Admin
     def __str__(self):
         return f"{self.title} - {self.city} ({self.status})"
 
@@ -85,17 +94,12 @@ class Complaint(models.Model):
 
 class Notification(models.Model):
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="notifications"
-    )
-
-    message = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.CharField(max_length=255)
 
     is_read = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Notification for {self.user.username}"
+        return self.message

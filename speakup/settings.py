@@ -124,5 +124,3 @@ LOGOUT_REDIRECT_URL = '/'
 
 # DEFAULT PRIMARY KEY
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-

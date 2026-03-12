@@ -272,29 +272,55 @@ def delete_complaint(request, complaint_id):
 @staff_member_required
 def admin_dashboard(request):
 
-    complaints = Complaint.objects.all().order_by('-created_at')
+    complaints = Complaint.objects.all()
 
-    return render(request, 'complaints/admin_dashboard.html', {
-        'complaints': complaints
-    })
+    total = complaints.count()
+    pending = complaints.filter(status='Pending').count()
+    progress = complaints.filter(status='In Progress').count()
+    resolved = complaints.filter(status='Resolved').count()
 
+    # Category statistics
+    category_data = complaints.values('category').annotate(count=Count('category'))
+
+    categories = []
+    category_counts = []
+
+    for item in category_data:
+        categories.append(item['category'])
+        category_counts.append(item['count'])
+
+    context = {
+        'complaints': complaints,
+        'total': total,
+        'pending': pending,
+        'progress': progress,
+        'resolved': resolved,
+        'categories': categories,
+        'category_counts': category_counts,
+    }
+
+    return render(request, 'complaints/admin_dashboard.html', context)
 
 # ---------------- UPDATE COMPLAINT STATUS ----------------
 
 @staff_member_required
-def update_status(request, id):
 
-    complaint = get_object_or_404(Complaint, id=id)
+def update_status(request,id):
 
-    if request.method == 'POST':
+    complaint = get_object_or_404(Complaint,id=id)
 
-        complaint.status = request.POST.get('status')
+    if request.method == "POST":
+
+        new_status = request.POST.get("status")
+        complaint.status = new_status
         complaint.save()
 
-        messages.success(request, "Status updated successfully")
+        Notification.objects.create(
+            user=complaint.user,
+            message=f"Your complaint '{complaint.title}' status updated to {new_status}"
+        )
 
-        return redirect('admin_dashboard')
-
+    return redirect('admin_dashboard')
     return render(request, 'complaints/update_status.html', {
         'complaint': complaint
     })
@@ -347,14 +373,9 @@ def user_notifications(request):
 
 def notification_count(request):
     if request.user.is_authenticated:
-        count = Notification.objects.filter(
-            user=request.user,
-            is_read=False
-        ).count()
-    else:
-        count = 0
-
-    return {'notification_count': count}
+        count = Notification.objects.filter(user=request.user, is_read=False).count()
+        return {'notification_count': count}
+    return {'notification_count': 0}
 
 @login_required
 def notifications(request):
@@ -375,12 +396,7 @@ def notifications(request):
 })
 @login_required
 def mark_notification_read(request, pk):
-    notification = get_object_or_404(
-        Notification,
-        pk=pk,
-        user=request.user
-    )
-
+    notification = get_object_or_404(Notification, pk=pk)
     notification.is_read = True
     notification.save()
 

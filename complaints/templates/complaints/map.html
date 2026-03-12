@@ -1,64 +1,226 @@
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDatklB8NhQBBRkABXSh0QNklvvVNT5ZaM&libraries=visualization&callback=initMap" async defer></script>
+
 <script>
 
-var map = L.map('map').setView([20.5937, 78.9629], 5);
+let map;
+let marker;
+let geocoder;
+let markerCluster;
+let heatmap;
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-}).addTo(map);
+/* Complaints data from Django */
 
-var marker;
+let complaints = [
+{% for c in complaints %}
+{
+title: "{{ c.title|escapejs }}",
+category: "{{ c.category|escapejs }}",
+status: "{{ c.status|escapejs }}",
+lat: {{ c.latitude|default:0 }},
+lng: {{ c.longitude|default:0 }}
+}{% if not forloop.last %},{% endif %}
+{% endfor %}
+];
 
-// Click on map
-map.on('click', function(e){
+$(document).ready(function(){
 
-    var lat = e.latlng.lat;
-    var lng = e.latlng.lng;
+$('#stateDropdown').select2({
+placeholder:"Search state"
+});
 
-    if(marker){
-        map.removeLayer(marker);
-    }
+/* Auto locate when fields change */
 
-    marker = L.marker([lat,lng]).addTo(map);
-
-    document.getElementById("latitude").value = lat;
-    document.getElementById("longitude").value = lng;
+$('#stateDropdown, input[name="city"], textarea[name="address"]').on('input change', function(){
+locateAddress();
+});
 
 });
 
 
-// GPS Location Function
-function getLocation(){
+/* Category toggle */
 
-    if(navigator.geolocation){
+function toggleOtherCategory(){
 
-        navigator.geolocation.getCurrentPosition(showPosition);
+let category=document.getElementById("category").value;
+let div=document.getElementById("otherCategoryDiv");
 
-    }else{
-
-        alert("Geolocation not supported by this browser.");
-
-    }
+if(category==="Other"){
+div.style.display="block";
+}else{
+div.style.display="none";
+}
 
 }
 
 
-function showPosition(position){
+/* Initialize Map */
 
-    var lat = position.coords.latitude;
-    var lng = position.coords.longitude;
+function initMap(){
 
-    map.setView([lat,lng],15);
+map = new google.maps.Map(document.getElementById("map"),{
+center:{lat:20.5937,lng:78.9629},
+zoom:5
+});
 
-    if(marker){
-        map.removeLayer(marker);
-    }
+geocoder = new google.maps.Geocoder();
 
-    marker = L.marker([lat,lng]).addTo(map)
-    .bindPopup("You are here")
-    .openPopup();
+/* Click map to select location */
 
-    document.getElementById("latitude").value = lat;
-    document.getElementById("longitude").value = lng;
+map.addListener("click",function(event){
+
+let lat=event.latLng.lat();
+let lng=event.latLng.lng();
+
+placeMarker(lat,lng);
+
+});
+
+/* Show complaints */
+
+showComplaintMarkers();
+
+/* Heatmap */
+
+showHeatmap();
+
+}
+
+
+/* Place marker */
+
+function placeMarker(lat,lng){
+
+if(marker){
+marker.setMap(null);
+}
+
+marker=new google.maps.Marker({
+position:{lat:lat,lng:lng},
+map:map
+});
+
+document.getElementById("latitude").value=lat;
+document.getElementById("longitude").value=lng;
+
+}
+
+
+/* Show complaint markers */
+
+function showComplaintMarkers(){
+
+let markers=[];
+
+complaints.forEach(function(c){
+
+if(c.lat==0 || c.lng==0){
+return;
+}
+
+let iconColor;
+
+if(c.status==="Pending"){
+iconColor="http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+}
+else if(c.status==="In Progress"){
+iconColor="http://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+}
+else{
+iconColor="http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+}
+
+let marker=new google.maps.Marker({
+position:{lat:c.lat,lng:c.lng},
+icon:iconColor
+});
+
+let infoWindow=new google.maps.InfoWindow({
+content:
+"<b>"+c.title+"</b><br>"+
+"Category: "+c.category+"<br>"+
+"Status: "+c.status
+});
+
+marker.addListener("click",function(){
+infoWindow.open(map,marker);
+});
+
+markers.push(marker);
+
+});
+
+/* Marker cluster */
+
+markerCluster=new markerClusterer.MarkerClusterer({
+map:map,
+markers:markers
+});
+
+}
+
+
+/* Heatmap */
+
+function showHeatmap(){
+
+let heatData=[];
+
+complaints.forEach(function(c){
+
+if(c.lat && c.lng){
+heatData.push(new google.maps.LatLng(c.lat,c.lng));
+}
+
+});
+
+heatmap=new google.maps.visualization.HeatmapLayer({
+data:heatData,
+map:map,
+radius:30
+});
+
+}
+
+
+/* Locate typed address */
+
+function locateAddress(){
+
+if(!geocoder){
+alert("Map is still loading");
+return;
+}
+
+let state = document.getElementById("stateDropdown").value;
+let city = document.querySelector('input[name="city"]').value;
+let address = document.querySelector('textarea[name="address"]').value;
+
+if(!state || !city || !address){
+alert("Please enter State, City and Address first");
+return;
+}
+
+let fullAddress = address + ", " + city + ", " + state + ", India";
+
+geocoder.geocode({ address: fullAddress }, function(results, status){
+
+if(status === "OK"){
+
+let location = results[0].geometry.location;
+
+map.setCenter(location);
+map.setZoom(16);
+
+placeMarker(location.lat(), location.lng());
+
+}
+else{
+
+alert("Location not found: " + status);
+
+}
+
+});
 
 }
 

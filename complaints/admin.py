@@ -37,27 +37,60 @@ class ComplaintAdmin(admin.ModelAdmin):
         'zipcode'
     )
 
+    # Only status editable from list
     list_editable = (
         'status',
-        'priority',
     )
 
     ordering = ('-created_at',)
 
     list_per_page = 20
 
-    readonly_fields = ('created_at',)
+    readonly_fields = (
+        'title',
+        'user',
+        'category',
+        'description',
+        'state',
+        'city',
+        'address',
+        'zipcode',
+        'latitude',
+        'longitude',
+        'priority',
+        'image',
+        'created_at'
+    )
+
+    fields = (
+        'title',
+        'user',
+        'category',
+        'description',
+        'state',
+        'city',
+        'address',
+        'zipcode',
+        'latitude',
+        'longitude',
+        'priority',
+        'status',
+        'image',
+        'created_at'
+    )
 
     # Disable Add Complaint
     def has_add_permission(self, request):
         return False
 
-    # Disable Delete Complaint
+    # Allow delete for admin
     def has_delete_permission(self, request, obj=None):
-        return False
+        return request.user.is_superuser
+
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
+
         extra_context['total_complaints'] = Complaint.objects.count()
         extra_context['pending'] = Complaint.objects.filter(status='Pending').count()
         extra_context['in_progress'] = Complaint.objects.filter(status='In Progress').count()
@@ -66,7 +99,8 @@ class ComplaintAdmin(admin.ModelAdmin):
 
         return super().changelist_view(request, extra_context=extra_context)
 
-    # 🔔 Create notification when status changes
+
+    # Create notification when status changes
     def save_model(self, request, obj, form, change):
 
         message = None
@@ -87,7 +121,6 @@ class ComplaintAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-        # Create notification only if message exists
         if message:
             Notification.objects.create(
                 user=obj.user,
